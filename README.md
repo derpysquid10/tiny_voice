@@ -1,4 +1,4 @@
-# ece324_project
+# Welcome
 
 <!-- PROJECT LOGO -->
 <br />
