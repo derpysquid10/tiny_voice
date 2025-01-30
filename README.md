@@ -9,5 +9,9 @@
 
 
 ## TODO
-requirements.txt
-cookie cutter file format
+- requirements.txt
+- cookie cutter file format
+- setup instructions, download data instructions, etc
+- notebooks for testing, %autoreload
+- models folder: predictions, training log, model config, eval stats
+
