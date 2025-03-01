@@ -1,17 +1,20 @@
-# Welcome
-
-<!-- PROJECT LOGO -->
-<br />
+<div align="center">
+  
+# Tiny Workshop
+Fine-tuning of Whisper Models on Edge Device CPUs
+</div>
 <p align="center">
-  <a href="https://github.com/catiaspsilva/README-template">
-    <img src="figures/gators.jpg" alt="Logo" width="150" height="150">
-  </a>
+   <img src="figures/tiny_workshop_banner.jpg" width="800" title="hover text">
+
+</p>
+<br />
 
 
 ## TODO
-- [ ] requirements.txt
+- [ ] requirements.txt![Uploading tiny_workshop_banner.jpg…]()
+
 - [ ] python environment (python 3.10?), set up mamba over conda
-- [ ] cookie cutter file format
+- [x] cookie cutter file format
 - [ ] setup instructions, download data instructions, etc
 - [ ] notebooks for testing, %autoreload
 - [ ] models folder: predictions, training log, model config, eval stats
