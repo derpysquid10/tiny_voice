@@ -133,7 +133,7 @@ PyQt6_sip==13.9.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.20
-pytorch-triton==3.2.0+git4b3bb1f8
+pytorch-triton==3.2.0
 pytz==2024.1
 PyYAML==6.0.2
 pyyaml_env_tag==0.1
@@ -168,10 +168,10 @@ threadpoolctl==3.5.0
 tiny_workshop==0.0.1
 tokenizers==0.21.0
 tomlkit==0.13.2
-torch==2.7.0.dev20250224+cu124
-torchaudio==2.6.0.dev20250224+cu124
+torch==2.7.0
+torchaudio==2.6.0
 torchinfo==1.8.0
-torchvision==0.22.0.dev20250224+cu124
+torchvision==0.22.0
 tornado==6.4.2
 tqdm==4.67.1
 traitlets==5.14.3
