@@ -11,6 +11,3 @@ dependencies:
   - ipython
   - tqdm
   - pip
-  - pip:
-    - torch
-    - wandb
