@@ -5,3 +5,5 @@ python-dotenv==1.0.1
 tqdm==4.67.1
 transformers==4.49.0
 typer==0.15.2
+intel_extension_for_pytorch==2.6.0
+oneccl-bind-pt==2.6.0
