@@ -21,3 +21,17 @@ Fine-tuning of Whisper Models on Edge Device CPUs
 - [ ] fnpg command line for manipulating audio and video, installable wiht python with mamba
 - [ ] make svg figures first, then convert to png. inkscape
 - [ ] 
+
+## Setup
+```bash
+# Cloning the repository
+git clone ** **ADD REPOSITORY LINK **
+
+cd tiny_workshop
+
+# Setting up environment and installing libraries
+conda env create -f environment.yml
+conda activate tiny-workshop
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu   # We want CPU version of pytorch
+pip install -r requirements.txt
+```
