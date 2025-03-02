@@ -54,7 +54,7 @@ def set_cache_dir() -> str:
     while not os.path.exists(os.path.join(repo_root, ".git")) and repo_root != "/":
         repo_root = os.path.dirname(repo_root)  # Move up one level until we find the .git directory
 
-    cache_dir = os.path.join(repo_root, "data", "cache")
+    cache_dir = os.path.join(repo_root, "data", "hf_cache")
     return repo_root, cache_dir
 
 
@@ -164,23 +164,25 @@ if __name__ == "__main__":
         per_device_train_batch_size=16,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
-        warmup_steps=100,
-        max_steps=1000,
+        warmup_steps=20,
+        max_steps=200,
         gradient_checkpointing=True,
+        bf16=False, # Set this to true if your CPU has avx512 support
         fp16=True,
         evaluation_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=225,
-        save_steps=200,
-        eval_steps=200,
-        logging_steps=25,
+        save_steps=40,
+        eval_steps=40,
+        logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
         use_cpu=True,
+        use_ipex=True, # Intel extension for PyTorch, optimized for CPU
     )
 
     # Create the trainer

@@ -54,7 +54,7 @@ def set_cache_dir() -> str:
     while not os.path.exists(os.path.join(repo_root, ".git")) and repo_root != "/":
         repo_root = os.path.dirname(repo_root)  # Move up one level until we find the .git directory
 
-    cache_dir = os.path.join(repo_root, "data", "cache")
+    cache_dir = os.path.join(repo_root, "data", "hf_cache")
     return repo_root, cache_dir
 
 
