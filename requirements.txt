@@ -6,4 +6,8 @@ tqdm==4.67.1
 transformers==4.49.0
 typer==0.15.2
 intel_extension_for_pytorch==2.6.0
-oneccl-bind-pt==2.6.0
+jiwer==3.1.0
+soundfile==0.13.1
+librosa==0.10.2.post1
+accelerate==1.4.0
+wandb==0.19.7

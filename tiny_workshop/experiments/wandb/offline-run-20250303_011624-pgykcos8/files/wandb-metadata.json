@@ -1,0 +1,30 @@
+{
+  "os":  "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python":  "CPython 3.12.9",
+  "startedAt":  "2025-03-03T06:16:24.513293Z",
+  "program":  "/home/gordon_tan/tiny_workshop/tiny_workshop/experiments/baseline_finetune_cpu.py",
+  "codePath":  "tiny_workshop/experiments/baseline_finetune_cpu.py",
+  "git":  {
+    "remote":  "git@github.com:derpysquid10/tiny_workshop.git",
+    "commit":  "26c3e74781c546431f32ac6b5fdc69df80717fca"
+  },
+  "root":  "/home/gordon_tan/tiny_workshop/tiny_workshop/experiments",
+  "host":  "GordonTan",
+  "executable":  "/home/gordon_tan/miniconda3/envs/tiny-workshop/bin/python",
+  "codePathLocal":  "baseline_finetune_cpu.py",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "disk":  {
+    "/":  {
+      "total":  "1081101176832",
+      "used":  "17639247872"
+    }
+  },
+  "memory":  {
+    "total":  "33487659008"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  16
+  }
+}

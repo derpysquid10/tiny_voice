@@ -8,6 +8,10 @@ dependencies:
   - ipykernel
   - pandas
   - scipy
+  - numpy 
   - ipython
   - tqdm
   - pip
+  - datasets
+  - transformers
+

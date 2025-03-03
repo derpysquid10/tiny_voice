@@ -63,9 +63,9 @@ def load_data(cach_dir: str) -> DatasetDict:
     Load Afrispeech-200 data from huggingface datasets
     """
     afrispeech = DatasetDict()
-    afrispeech["train"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="train", cache_dir=cache_dir)
-    afrispeech["val"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="validation", cache_dir=cache_dir)
-    afrispeech["test"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="test", cache_dir=cache_dir)
+    afrispeech["train"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="train", cache_dir=cache_dir, trust_remote_code=True)
+    afrispeech["val"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="validation", cache_dir=cache_dir, trust_remote_code=True)
+    afrispeech["test"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="test", cache_dir=cache_dir, trust_remote_code=True)
     return afrispeech
 
 
