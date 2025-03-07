@@ -2,13 +2,18 @@
 Download Afrispeech-200 data from huggingface datasets
 """
 
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, load_from_disk, DatasetDict, Audio
+from transformers import WhisperProcessor, WhisperFeatureExtractor, WhisperTokenizer
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from config import HF_CACHE_DIR, EDA_DIR
 from tabulate import tabulate
+from config import HF_CACHE_DIR, EDA_DIR, PROCESSED_DATA_DIR, MODEL_NAME
+import numpy as np
+import typer
 
+
+app = typer.Typer()
 
 def load_data() -> DatasetDict:
     """
@@ -21,6 +26,7 @@ def load_data() -> DatasetDict:
     print("\nAfrispeech-200 dataset loaded successfully!\n")
 
     return afrispeech_isizulu
+
 
 def eda(data: DatasetDict) -> None:
     """
@@ -48,8 +54,6 @@ def eda(data: DatasetDict) -> None:
     # 'country': Value(dtype='string', id=None), 
     # 'duration': Value(dtype='float32', id=None)}
     print()
-    
-
 
     # Count the occurrences of each age group in the dataset
     age_counts_train = pd.Series(train_data["age_group"]).replace("", "UNKNOWN").value_counts(normalize=True)
@@ -152,18 +156,47 @@ def eda(data: DatasetDict) -> None:
     print()
 
 
+def prepare_dataset(batch: DatasetDict) -> DatasetDict:
+    """
+    Helper function that prepares the dataset for training (this function is taken from hugging face tutorial)
+    """
+    # load and resample audio data from 48 to 16kHz
+    audio = batch["audio"]
+
+    # compute log-Mel input features from input audio array and pad/truncate to 30 seconds
+    feature_extractor = WhisperFeatureExtractor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR) 
+    batch["input_features"] = feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
+
+    # encode target text to label ids
+    tokenizer = WhisperTokenizer.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR) 
+    batch["labels"] = tokenizer(batch["transcript"]).input_ids
+    return batch
 
 
+def process_data(data: DatasetDict) -> DatasetDict:
+    """
+    Process the data for training:
+    - Downsample audio data from 48kHz to 16kHz
+    - Compute log-Mel input features from input audio array
+    - Encode target text to label ids
+    - Save the processed data to disk
+    """
+    data = data.cast_column("audio", Audio(sampling_rate=16000)) # downsample audio data from 48kHz to 16kHz
+    data = data.map(prepare_dataset, remove_columns=data.column_names["train"], num_proc=4)
+    data.save_to_disk(PROCESSED_DATA_DIR)
+    print(f"Dataset processed successfully! Saved to {PROCESSED_DATA_DIR}")
+    return data
 
-    # for feature in features:
-    #     df.loc[feature, "train"] = train_data[feature]
-    #     df.loc[feature, "val"] = val_data[feature]
-    #     df.loc[feature, "test"] = test_data[feature]
-    # print(df)
-
-    
-    
+@app.command()
+def main(
+    perform_eda: bool = typer.Option(False),
+    process_data: bool = typer.Option(False)
+):
+    afrispeech_isizulu = load_data()
+    if perform_eda:
+        eda(afrispeech_isizulu)
+    if process_data:
+        process_data(afrispeech_isizulu)
 
 if __name__ == "__main__":
-    afrispeech = load_data()
-    eda(afrispeech)    
+    app()

@@ -21,6 +21,9 @@ REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = PROJ_ROOT / "figures"
 EDA_DIR = FIGURES_DIR / "eda"
 
+# Model
+MODEL_NAME = "openai/whisper-base"
+
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
 try:
