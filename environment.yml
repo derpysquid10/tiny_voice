@@ -14,4 +14,5 @@ dependencies:
   - pip
   - datasets
   - transformers
+  - tabulate
 

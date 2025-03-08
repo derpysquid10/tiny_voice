@@ -11,3 +11,4 @@ soundfile==0.13.1
 librosa==0.10.2.post1
 accelerate==1.4.0
 wandb==0.19.7
+tabulate

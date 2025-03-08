@@ -38,7 +38,42 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 pip install -r requirements.txt
 ```
 
-
-## Preparing Dataset
-
 ## Running Tiny Workshop
+### Loading the Dataset
+First, we have to load the Afrispeech-200 dataset
+```bash
+python tiny_workshop/data_processing.py --process-data
+```
+
+### Baseline Tests
+Now, we can run our baseline fine-tuning tests on a CPU and GPU:
+```bash
+# for CPU
+python tiny_workshop/experiments/baseline_finetune_cpu.py 
+
+# for GPU
+python tiny_workshop/experiments/baseline_finetune_gpu.py
+```
+
+If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```conda install -c conda-forge libstdcxx-ng=12``` and re-run the baseline tests.
+
+
+
+### Fine-tuning Experiments
+Here, we can experiment fune-tuning with LoRA, additive fine-tuning, and partial fine-tuning:
+
+#### LoRA
+```bash
+python 
+```
+
+#### Additive Fine-tuning
+```bash
+python 
+```
+
+#### Partial Fine-tuning
+```bash
+python 
+```
+
