@@ -173,7 +173,7 @@ def prepare_dataset(batch: DatasetDict) -> DatasetDict:
     return batch
 
 
-def process_data(data: DatasetDict) -> DatasetDict:
+def processing_data(data: DatasetDict) -> DatasetDict:
     """
     Process the data for training:
     - Downsample audio data from 48kHz to 16kHz
@@ -196,7 +196,7 @@ def main(
     if perform_eda:
         eda(afrispeech_isizulu)
     if process_data:
-        process_data(afrispeech_isizulu)
+        processing_data(afrispeech_isizulu)
 
 if __name__ == "__main__":
     app()
