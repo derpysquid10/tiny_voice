@@ -65,17 +65,25 @@ If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```cond
 Here, we can experiment fune-tuning with LoRA, additive fine-tuning, and partial fine-tuning:
 
 #### LoRA
+:construction::construction: Currently in progress :construction::construction:
 ```bash
-python 
 ```
 
 #### Additive Fine-tuning
+:construction::construction: Currently in progress :construction::construction:
 ```bash
-python 
 ```
 
 #### Partial Fine-tuning
 ```bash
-python 
+# Fine-tuning the encoder
+python tiny_workshop/experiments/finetune_encoder_LL.py
+
+# Fine-tuning the decoder
+python tiny_workshop/experiments/finetune_decoder_LL.py
+
+# Fine-tuning the encoder and decoder
+python partial: tiny_workshop/experiments/finetune_both_LL.p
 ```
+
 
