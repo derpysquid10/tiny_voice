@@ -27,7 +27,9 @@ We set up a virtual environment using conda, and our code is developed in Python
 
 ```bash
 # Cloning the repository
-git clone https://github.com/derpysquid10/tiny_workshop.git
+if you have not possess this directory before, do git clone https://github.com/derpysquid10/tiny_workshop.git
+if you have, either first do rm -r tiny_workshop to remove the existing directory then clone
+or do git pull origin main (NOTE CURRENTLY IN PROGRESS, needs to verify if that works)
 
 cd tiny_workshop
 
