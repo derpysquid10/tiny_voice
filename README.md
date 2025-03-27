@@ -20,7 +20,8 @@ Fine-tuning of Whisper Models on Edge Device CPUs
 - [ ] models folder: predictions, training log, model config, eval stats
 - [ ] fnpg command line for manipulating audio and video, installable wiht python with mamba
 - [ ] make svg figures first, then convert to png. inkscape
-- [ ] 
+- [ ] create a figure (first figure in paper) for description of problem: local fine-tuning instead of cloud based
+- [ ] create a figure (second figure in paper) for decription of methodology: partial-fine-tuning, adatptor, lora, etc.
 
 ## Setup
 We set up a virtual environment using conda, and our code is developed in Python 3.12.
