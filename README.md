@@ -44,7 +44,10 @@ pip install -r requirements.txt
 ## Running Tiny Workshop
 ### activate the environment after initial setup
 Each time just do conda activate tiny-workshop
-if seesing error "conda: command not found," type bash in the command line and try again
+if seeing error "conda: command not found," type bash in the command line and try again
+
+### Entering VScode
+In case user wants to get into vscode instead of just work on terminal, type code . in terminal
 
 ### Loading the Dataset
 First, we have to load the Afrispeech-200 dataset
