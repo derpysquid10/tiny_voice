@@ -69,13 +69,25 @@ def eda(data: DatasetDict) -> None:
     print()
 
     # Plot distribution
-    age_counts_df.plot(kind="bar", figsize=(10, 6), color=["blue", "orange", "green"])
-    plt.title("Age Group Distribution")
-    plt.xlabel("Age Group")
-    plt.ylabel("Relative Frequency")
-    plt.legend(title="Dataset Split")
+    # Define color palette
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]  # Muted blue, orange, and green
+    # plt.style.use("seaborn-whitegrid") 
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=300)  # High DPI for publication quality
+    age_counts_df.plot(
+        kind="bar", 
+        color=colors, 
+        ax=ax,
+        width=0.8,  # Adjust bar width for better spacing
+        edgecolor="black"  # Make bars more distinguishable
+    )
+    ax.set_title("Age Group Distribution", fontsize=14, fontweight="bold", pad=10)
+    ax.set_xlabel("Age Group", fontsize=12, labelpad=8)
+    ax.set_ylabel("Relative Frequency", fontsize=12, labelpad=8)
+    ax.tick_params(axis="both", labelsize=11)
+    ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
+    ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "age_group_distribution.png"))
+    plt.savefig(os.path.join(EDA_DIR, "age_group_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Count the gender distribution in the dataset
@@ -92,13 +104,22 @@ def eda(data: DatasetDict) -> None:
     print()
 
     # Plot distribution
-    gender_counts_df.plot(kind="bar", figsize=(10, 6), color=["blue", "orange", "green"])
-    plt.title("Gender Distribution")
-    plt.xlabel("Gender")
-    plt.ylabel("Relative Frequency")
-    plt.legend(title="Dataset Split")
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=300)  # High DPI for publication quality
+    gender_counts_df.plot(
+        kind="bar", 
+        color=colors, 
+        ax=ax,
+        width=0.8,  # Adjust bar width for better spacing
+        edgecolor="black"  # Make bars more distinguishable
+    )
+    ax.set_title("Gender Distribution", fontsize=14, fontweight="bold", pad=10)
+    ax.set_xlabel("Gender", fontsize=12, labelpad=8)
+    ax.set_ylabel("Relative Frequency", fontsize=12, labelpad=8)
+    ax.tick_params(axis="both", labelsize=11)
+    ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
+    ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "gender_distribution.png"))
+    plt.savefig(os.path.join(EDA_DIR, "gender_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Count the domain distribution in the dataset
@@ -115,13 +136,22 @@ def eda(data: DatasetDict) -> None:
     print()
 
     # Plot distribution
-    domain_counts_df.plot(kind="bar", figsize=(10, 6), color=["blue", "orange", "green"])
-    plt.title("Domain Distribution")
-    plt.xlabel("Domain")
-    plt.ylabel("Relative Frequency")
-    plt.legend(title="Dataset Split")
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=300)  # High DPI for publication quality
+    domain_counts_df.plot(
+        kind="bar", 
+        color=colors, 
+        ax=ax,
+        width=0.8,  # Adjust bar width for better spacing
+        edgecolor="black"  # Make bars more distinguishable
+    )
+    ax.set_title("Domain Distribution", fontsize=14, fontweight="bold", pad=10)
+    ax.set_xlabel("Domain", fontsize=12, labelpad=8)
+    ax.set_ylabel("Relative Frequency", fontsize=12, labelpad=8)
+    ax.tick_params(axis="both", labelsize=11)
+    ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
+    ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "domain_distribution.png"))
+    plt.savefig(os.path.join(EDA_DIR, "domain_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Compute the average duration of the audio files in the dataset

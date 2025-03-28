@@ -20,14 +20,17 @@ Fine-tuning of Whisper Models on Edge Device CPUs
 - [ ] models folder: predictions, training log, model config, eval stats
 - [ ] fnpg command line for manipulating audio and video, installable wiht python with mamba
 - [ ] make svg figures first, then convert to png. inkscape
-- [ ] 
+- [ ] create a figure (first figure in paper) for description of problem: local fine-tuning instead of cloud based
+- [ ] create a figure (second figure in paper) for decription of methodology: partial-fine-tuning, adatptor, lora, etc.
 
 ## Setup
 We set up a virtual environment using conda, and our code is developed in Python 3.12.
 
 ```bash
 # Cloning the repository
-git clone https://github.com/derpysquid10/tiny_workshop.git
+if you do not possess this directory, do git clone https://github.com/derpysquid10/tiny_workshop.git
+if you do, either first do rm -r tiny_workshop to remove the existing directory then clone
+or do git pull origin main
 
 cd tiny_workshop
 
@@ -39,6 +42,13 @@ pip install -r requirements.txt
 ```
 
 ## Running Tiny Workshop
+### activate the environment after initial setup
+Each time just do conda activate tiny-workshop
+if seeing error "conda: command not found," type bash in the command line and try again
+
+### Entering VScode
+In case user wants to get into vscode instead of just work on terminal, type code . in terminal
+
 ### Loading the Dataset
 First, we have to load the Afrispeech-200 dataset
 ```bash
@@ -63,17 +73,25 @@ If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```cond
 Here, we can experiment fune-tuning with LoRA, additive fine-tuning, and partial fine-tuning:
 
 #### LoRA
+:construction::construction: Currently in progress :construction::construction:
 ```bash
-python 
 ```
 
 #### Additive Fine-tuning
+:construction::construction: Currently in progress :construction::construction:
 ```bash
-python 
 ```
 
 #### Partial Fine-tuning
 ```bash
-python 
+# Fine-tuning the encoder
+python tiny_workshop/experiments/finetune_encoder_LL.py
+
+# Fine-tuning the decoder
+python tiny_workshop/experiments/finetune_decoder_LL.py
+
+# Fine-tuning the encoder and decoder
+python partial: tiny_workshop/experiments/finetune_both_LL.p
 ```
+
 
