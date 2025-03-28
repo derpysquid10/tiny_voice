@@ -13,6 +13,10 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
+# Global variables
+EXPERIMENT_NAME = "torch_quantization_cpu"
+EXPERIMENT_TAG = ["torch_quantization", "cpu"]
+
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
@@ -81,10 +85,11 @@ def train_cpu():
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
     
     quantized_model = torch.quantization.quantize_dynamic(
-    model, {torch.nn.Linear}, dtype=torch.qint8
-)
+        model, {torch.nn.Linear}, dtype=torch.qint8)
+    
     quantized_model.generation_config.language = "English"
     quantized_model.generation_config.task = "transcribe"
+    
     # print memory size of weights
     total_size = sum(p.numel() * p.element_size() for p in model.parameters())
 
@@ -98,7 +103,7 @@ def train_cpu():
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
         processor=processor,
-        decoder_start_token_id=model.config.decoder_start_token_id,
+        decoder_start_token_id=quantized_model.config.decoder_start_token_id,
     )
 
     # Define the evaluation metric (word error rate)
@@ -106,15 +111,15 @@ def train_cpu():
 
     wandb.init(
         project="tiny_workshop",
-        name="torch_quantization_cpu",
-        tags=["torch_quantization", "cpu"],
+        name=EXPERIMENT_NAME,
+        tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
     max_steps = 2
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / "torch_quantization_cpu", 
+        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
@@ -141,7 +146,7 @@ def train_cpu():
     # Create the trainer
     trainer = Seq2SeqTrainer(
         args=training_args,
-        model=model,
+        model=quantized_model,
         train_dataset=afrispeech["train"],
         eval_dataset=afrispeech["test"],
         data_collator=data_collator,
@@ -149,10 +154,10 @@ def train_cpu():
         tokenizer=processor.feature_extractor,
     )
 
-    # # Evaluate the pretrained model before fine tuning
-    # print("Evaluating the pre-trained model...")
-    # eval_results = trainer.evaluate()
-    # print("Evaluation results: ", eval_results)
+    # Evaluate the pretrained model before fine tuning
+    print("Evaluating the pre-trained model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")
