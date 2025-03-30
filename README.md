@@ -85,10 +85,10 @@ Here, we can experiment fune-tuning with LoRA, additive fine-tuning, and partial
 #### Partial Fine-tuning
 ```bash
 # Fine-tuning the encoder
-python tiny_workshop/experiments/finetune_encoder_LL.py
+python tiny_workshop/experiments/finetune_encode_LL.py
 
 # Fine-tuning the decoder
-python tiny_workshop/experiments/finetune_decoder_LL.py
+python tiny_workshop/experiments/finetune_decode_LL.py
 
 # Fine-tuning the encoder and decoder
 python partial: tiny_workshop/experiments/finetune_both_LL.p
