@@ -66,8 +66,8 @@ If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```cond
 Here, we can experiment fune-tuning with LoRA, additive fine-tuning, and partial fine-tuning:
 
 #### LoRA
-:construction::construction: Currently in progress :construction::construction:
 ```bash
+python tiny_workshop/experiments/lora_finetune_cpu.py
 ```
 
 #### Additive Fine-tuning
