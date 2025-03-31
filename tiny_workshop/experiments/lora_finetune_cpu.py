@@ -13,6 +13,12 @@ from peft import LoraConfig, PeftModel, LoraModel, LoraConfig, get_peft_model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
+
+# Global variables
+EXPERIMENT_NAME = "rslora_finetune_gpu"
+RANK = 4
+EXPERIMENT_TAG = ["gpu", "lora"]
+
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
@@ -83,7 +89,9 @@ def train_cpu():
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
     model.generation_config.language = "English"
     model.generation_config.task = "transcribe"
-    config = LoraConfig(r=32, lora_alpha=64, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none")
+
+    # LoRA configuration
+    config = LoraConfig(r=RANK, lora_alpha=64, use_rslora=True, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none")
     model = get_peft_model(model, config)
     model.print_trainable_parameters()
     print("Setting data collator, eval metrics, and training arguments...")
@@ -93,27 +101,28 @@ def train_cpu():
     )
     # Register the hook to make the initial inputs require grad
     model.model.get_encoder().conv1.register_forward_hook(make_inputs_require_grad)
+    
     # Define the evaluation metric (word error rate)
     wer_metric = evaluate.load("wer")
 
     wandb.init(
         project="tiny_workshop",
-        name="lora_finetune_cpu",
-        tags=["lora", "cpu"],
+        name=f"{EXPERIMENT_NAME}_r={RANK}",
+        tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 2
+    max_steps = 100
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / "lora_cpu", 
+        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_r={RANK}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-5,
+        learning_rate=1e-3,
         warmup_steps=20,
         max_steps=max_steps,
         gradient_checkpointing=True,
-        fp16=False,
+        fp16=True, # SET THIS TO FALSE LATER
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
@@ -126,7 +135,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=True,
+        use_cpu=False, # SET THIS TO TRUE LATER
         use_ipex=False,
         remove_unused_columns=False,
         label_names=["labels"]
@@ -155,6 +164,11 @@ def train_cpu():
     end_time = time.time()
     time_per_sample = (end_time - start_time) / (max_steps * batch_size)
     wandb.log({"time_per_sample": time_per_sample})
+
+    # Final evaluation
+    print("Evaluating the finetuned model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
 
 if __name__ == "__main__":
     train_cpu()
