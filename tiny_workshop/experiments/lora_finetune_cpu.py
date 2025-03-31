@@ -15,9 +15,9 @@ from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
 
 # Global variables
-EXPERIMENT_NAME = "rslora_finetune_gpu"
+EXPERIMENT_NAME = "lora_finetune_cpu"
 RANK = 4
-EXPERIMENT_TAG = ["gpu", "lora"]
+EXPERIMENT_TAG = ["cpu", "lora"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -91,7 +91,7 @@ def train_cpu():
     model.generation_config.task = "transcribe"
 
     # LoRA configuration
-    config = LoraConfig(r=RANK, lora_alpha=64, use_rslora=True, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none")
+    config = LoraConfig(r=RANK, lora_alpha=64, use_rslora=False, target_modules=["q_proj", "v_proj"], lora_dropout=0.05, bias="none")
     model = get_peft_model(model, config)
     model.print_trainable_parameters()
     print("Setting data collator, eval metrics, and training arguments...")
@@ -122,7 +122,7 @@ def train_cpu():
         warmup_steps=20,
         max_steps=max_steps,
         gradient_checkpointing=True,
-        fp16=True, # SET THIS TO FALSE LATER
+        fp16=False,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
@@ -135,7 +135,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=False, # SET THIS TO TRUE LATER
+        use_cpu=True,
         use_ipex=False,
         remove_unused_columns=False,
         label_names=["labels"]
