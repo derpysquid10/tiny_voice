@@ -37,6 +37,7 @@ conda env create -f environment.yml
 conda activate tiny-workshop
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu  # We want the CPU version of pytorch
 pip install -r requirements.txt
+pip install peft
 ```
 
 ## Running Tiny Workshop
