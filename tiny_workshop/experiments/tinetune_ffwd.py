@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
 # Global variables
-EXPERIMENT_NAME = "finetune_both_LL"
+EXPERIMENT_NAME = "finetune_ffwd"
 EXPERIMENT_TAG = ["cpu", "partial_finetuning"]
 
 
@@ -91,13 +91,13 @@ def train_cpu():
     # Finetune the last layer of the decoder and the encoder
     for param in model.parameters():
         param.requires_grad = False
-    for name, param in model.model.decoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
+    for name, param in model.model.decoder.layers.named_parameters():
+        if "fc" in name or "layer_norm" in name: 
             param.requires_grad = True
-    for name, param in model.model.encoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
+    for name, param in model.model.encoder.layers.named_parameters():
+        if "fc" in name or "layer_norm" in name: 
             param.requires_grad = True
-    
+            
     # Count trainable parameters
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
@@ -162,8 +162,8 @@ def train_cpu():
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
 
-    for name, param in model.named_parameters():
-        print(name, param.requires_grad)
+    # for name, param in model.named_parameters():
+    #     print(name, param.requires_grad)
 
     # Train the model
     print("Training the model...")

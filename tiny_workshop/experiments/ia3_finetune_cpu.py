@@ -16,7 +16,7 @@ from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
 # Global variables
 EXPERIMENT_NAME = "ia3_finetune_gpu"
-EXPERIMENT_TAG = ["gpu", "ia3"]
+EXPERIMENT_TAG = ["cpu", "ia3"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -139,8 +139,8 @@ def train_cpu():
         output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-3,
-        lr_scheduler_type="constant",
+        learning_rate=5e-3,
+        lr_scheduler_type="cosine",
         warmup_steps=0,
         max_steps=max_steps,
         gradient_checkpointing=True,
@@ -157,7 +157,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=False,
+        use_cpu=True,
         use_ipex=False,
         remove_unused_columns=False,
         label_names=["labels"],
