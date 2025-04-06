@@ -16,7 +16,7 @@ from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
 # Global variables
 EXPERIMENT_NAME = "ia3_finetune_gpu"
-EXPERIMENT_TAG = ["cpu", "ia3"]
+EXPERIMENT_TAG = ["gpu", "ia3"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -98,7 +98,7 @@ def train_cpu():
     # IA3 configuration
     # for name, param in model.named_parameters():
     #     print(name, param.requires_grad)
-    config = IA3Config(peft_type="IA3", target_modules=["k_proj", "v_proj", "fc1", "fc2"], feedforward_modules=["fc1", "fc2"])
+    config = IA3Config(peft_type="IA3", target_modules=["k_proj", "v_proj", "q_proj", "fc1", "fc2"], feedforward_modules=["fc1", "fc2"])
     model = IA3Model(config=config, model=model, adapter_name="ia3")
     
     # Count and print trainable parameters
@@ -134,7 +134,7 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 100
+    max_steps = 200
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}", 
         per_device_train_batch_size=batch_size,
@@ -157,7 +157,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=True,
+        use_cpu=False,
         use_ipex=False,
         remove_unused_columns=False,
         label_names=["labels"],
@@ -176,9 +176,9 @@ def train_cpu():
     )
 
     # Evaluate the pretrained model before fine tuning
-    print("Evaluating the pre-trained model...")
-    eval_results = trainer.evaluate()
-    print("Evaluation results: ", eval_results)
+    # print("Evaluating the pre-trained model...")
+    # eval_results = trainer.evaluate()
+    # print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")
