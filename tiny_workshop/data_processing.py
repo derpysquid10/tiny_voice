@@ -15,29 +15,46 @@ import typer
 
 app = typer.Typer()
 
-def load_data() -> DatasetDict:
+def load_data(dataset: str) -> DatasetDict:
     """
     Load Afrispeech-200 data from huggingface datasets, with the isizulu accent from South Africa
+    Args:
+        dataset (str): The name of the dataset to load. Must be one of "isizulu", “swahili”, “isixhosa”
+            "isizulu" for isiZulu accent from South Africa, a medium sized dataset with 3 hours of data
+            "swahili" for Swahili accent from Kenya, a larger dataset with 15 hours of data
+            "isixhosa" for isiXhosa accent from South Africa, a smaller dataset with only 35 minutes of data
     """
-    afrispeech_isizulu = DatasetDict()
-    afrispeech_isizulu["train"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="train", cache_dir=HF_CACHE_DIR)
-    afrispeech_isizulu["val"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="validation", cache_dir=HF_CACHE_DIR)
-    afrispeech_isizulu["test"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="test", cache_dir=HF_CACHE_DIR)
-    print("\nAfrispeech-200 dataset loaded successfully!\n")
+    if dataset not in ["isizulu", "swahili", "isixhosa"]:
+        raise ValueError("Dataset must be one of 'isizulu', 'swahili', 'isixhosa'")
+    
+    afrispeech = DatasetDict()
+    if dataset == "isizulu":
+        afrispeech["train"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="train", cache_dir=HF_CACHE_DIR)
+        afrispeech["val"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="validation", cache_dir=HF_CACHE_DIR)
+        afrispeech["test"] = load_dataset("tobiolatunji/afrispeech-200", "isizulu", split="test", cache_dir=HF_CACHE_DIR)
+    elif dataset == "swahili":
+        afrispeech["train"] = load_dataset("tobiolatunji/afrispeech-200", "swahili", split="train", cache_dir=HF_CACHE_DIR)
+        afrispeech["val"] = load_dataset("tobiolatunji/afrispeech-200", "swahili", split="validation", cache_dir=HF_CACHE_DIR)
+        afrispeech["test"] = load_dataset("tobiolatunji/afrispeech-200", "swahili", split="test", cache_dir=HF_CACHE_DIR)
+    elif dataset == "isixhosa":
+        afrispeech["train"] = load_dataset("tobiolatunji/afrispeech-200", "isixhosa", split="train", cache_dir=HF_CACHE_DIR)
+        afrispeech["val"] = load_dataset("tobiolatunji/afrispeech-200", "isixhosa", split="validation", cache_dir=HF_CACHE_DIR)
+        afrispeech["test"] = load_dataset("tobiolatunji/afrispeech-200", "isixhosa", split="test", cache_dir=HF_CACHE_DIR)
+    print(f"\nAfrispeech-200 {dataset} loaded successfully!\n")
 
-    return afrispeech_isizulu
+    return afrispeech
 
 
-def eda(data: DatasetDict) -> None:
+def eda(data: DatasetDict, dataset: str) -> None:
     """
     Exploratory data analysis
     """
     train_data = data["train"]
     val_data = data["val"]
     test_data = data["test"]
-    print("Number of training samples: ", len(train_data))  # 775
-    print("Number of validation samples: ", len(val_data))  # 169
-    print("Number of test samples: ", len(test_data))  # 100
+    print("Number of training samples: ", len(train_data)) 
+    print("Number of validation samples: ", len(val_data)) 
+    print("Number of test samples: ", len(test_data)) 
     print()
 
     # Display the dataset features
@@ -87,7 +104,7 @@ def eda(data: DatasetDict) -> None:
     ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
     ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "age_group_distribution.png"), bbox_inches="tight", dpi=300)
+    plt.savefig(os.path.join(EDA_DIR, f"{dataset}_age_group_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Count the gender distribution in the dataset
@@ -119,7 +136,7 @@ def eda(data: DatasetDict) -> None:
     ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
     ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "gender_distribution.png"), bbox_inches="tight", dpi=300)
+    plt.savefig(os.path.join(EDA_DIR, f"{dataset}_gender_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Count the domain distribution in the dataset
@@ -151,7 +168,7 @@ def eda(data: DatasetDict) -> None:
     ax.legend(title="Dataset Split", fontsize=10, title_fontsize=11, loc="upper right", frameon=False)
     ax.grid(axis="y", linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig(os.path.join(EDA_DIR, "domain_distribution.png"), bbox_inches="tight", dpi=300)
+    plt.savefig(os.path.join(EDA_DIR, f"{dataset}_domain_distribution.png"), bbox_inches="tight", dpi=300)
     plt.close()
 
     # Compute the average duration of the audio files in the dataset
@@ -203,7 +220,7 @@ def prepare_dataset(batch: DatasetDict) -> DatasetDict:
     return batch
 
 
-def processing_data(data: DatasetDict) -> DatasetDict:
+def processing_data(data: DatasetDict, dataset: str) -> DatasetDict:
     """
     Process the data for training:
     - Downsample audio data from 48kHz to 16kHz
@@ -213,20 +230,43 @@ def processing_data(data: DatasetDict) -> DatasetDict:
     """
     data = data.cast_column("audio", Audio(sampling_rate=16000)) # downsample audio data from 48kHz to 16kHz
     data = data.map(prepare_dataset, remove_columns=data.column_names["train"], num_proc=4)
-    data.save_to_disk(PROCESSED_DATA_DIR)
-    print(f"Dataset processed successfully! Saved to {PROCESSED_DATA_DIR}")
+    data.save_to_disk(f"{PROCESSED_DATA_DIR}_{dataset}")
+    print(f"Dataset processed successfully! Saved to {PROCESSED_DATA_DIR}_{dataset}")
     return data
 
 @app.command()
 def main(
-    perform_eda: bool = typer.Option(False),
-    process_data: bool = typer.Option(False)
+    
+    dataset: str = typer.Option("isizulu", help="Dataset to load. Must be one of 'isizulu', 'swahili', 'isixhosa'"),
+    perform_eda: bool = typer.Option(True),
+    process_data: bool = typer.Option(True)
 ):
-    afrispeech_isizulu = load_data()
+    """
+    Main function to process African speech datasets.
+
+    This function loads the specified dataset, optionally performs exploratory data analysis (EDA),
+    and processes the data as needed.
+
+    Usage:
+        python data_processing.py --dataset [dataset_name] --perform-eda/--no-perform-eda --process-data/--no-process-data
+        
+    Example:
+        python data_processing.py --dataset isizulu --no-perform-eda
+        python data_processing.py --help
+
+    Args:
+        dataset (str): Dataset to load. Must be one of 'isizulu', 'swahili', 'isixhosa'. Defaults to "isizulu".
+        perform_eda (bool): Whether to perform exploratory data analysis. Defaults to True.
+        process_data (bool): Whether to process the data. Defaults to True.
+
+    Returns:
+        None
+    """
+    afrispeech = load_data(dataset)
     if perform_eda:
-        eda(afrispeech_isizulu)
+        eda(afrispeech, dataset)
     if process_data:
-        processing_data(afrispeech_isizulu)
+        processing_data(afrispeech, dataset)
 
 if __name__ == "__main__":
     app()
