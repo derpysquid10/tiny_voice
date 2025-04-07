@@ -18,7 +18,7 @@ from datetime import datetime
 
 # Global variables
 today_date = datetime.now().date()
-DATASET = "isixhosa"
+DATASET = "swahili"
 EXPERIMENT_NAME = f"lora_finetune_gpu_{today_date}"
 RANK = 4
 EXPERIMENT_TAG = ["gpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
@@ -132,17 +132,17 @@ def train_cpu():
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-3,
-        lr_scheduler_type='constant',
-        warmup_steps=0,
-        num_train_epochs=3,
+        lr_scheduler_type='cosine',
+        warmup_steps=20,
+        num_train_epochs=1,
         gradient_checkpointing=True,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=25,
-        eval_steps=25,
+        save_steps=100,
+        eval_steps=100,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,

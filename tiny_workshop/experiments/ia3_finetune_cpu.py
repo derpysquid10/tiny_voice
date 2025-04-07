@@ -16,7 +16,7 @@ from datetime import datetime
 
 # Global variables
 today_date = datetime.now().date()
-DATASET = "isixhosa"
+DATASET = "swahili"
 EXPERIMENT_NAME = f"ia3_finetune_gpu_{today_date}"
 EXPERIMENT_TAG = ["gpu", "ia3", DATASET, MODEL_NAME, f"{today_date}"]
 
@@ -57,6 +57,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         batch["labels"] = labels
         return batch
 
+
 class CustomTrainer(Seq2SeqTrainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         # Remove any extra keys that the model doesn't support
@@ -65,6 +66,7 @@ class CustomTrainer(Seq2SeqTrainer):
 
 def make_inputs_require_grad(module, input, output):
     output.requires_grad_(True)
+
 
 def compute_metrics(pred: any) -> Dict[str, float]:
     """
@@ -141,18 +143,18 @@ def train_cpu():
         output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=5e-4,
-        lr_scheduler_type="linear",
+        learning_rate=1e-3,
+        lr_scheduler_type="constant",
         warmup_steps=20,
-        num_train_epochs=10,
+        num_train_epochs=1,
         gradient_checkpointing=True,
         fp16=False,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=20,
-        eval_steps=20,
+        save_steps=100,
+        eval_steps=100,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,

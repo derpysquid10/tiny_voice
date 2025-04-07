@@ -16,7 +16,7 @@ from datetime import datetime
 
 # Global variables
 today_date = datetime.now().date()
-DATASET = "isixhosa"
+DATASET = "swahili"
 EXPERIMENT_NAME = f"partial_finetuning_both_{today_date}"
 EXPERIMENT_TAG = ["gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
 
@@ -123,14 +123,14 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 200
+    # max_steps = 200
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / EXPERIMENT_NAME, 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=5e-4,
+        learning_rate=1e-3,
         warmup_steps=20,
-        max_steps=max_steps,
+        num_train_epochs=1,
         lr_scheduler_type="cosine",
         gradient_checkpointing=False,
         fp16=True,
@@ -138,8 +138,8 @@ def train_cpu():
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=25,
-        eval_steps=25,
+        save_steps=100,
+        eval_steps=100,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,
