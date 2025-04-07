@@ -1,19 +1,32 @@
-<div align="center">
-  
-# Tiny Workshop
-Fine-tuning of Whisper Models on Edge Device CPUs
-</div>
 <p align="center">
    <img src="figures/tiny_workshop_banner.jpg" width="800" title="hover text">
 
 </p>
 <br />
 
+<div align="center">
+
+# Tiny Voice 
+By Tiny Workshop<br/>
+An open-source, user friendly library to fine-tune speech-to-text models on edge device CPUs. <br/>
+
+
+![Static Badge](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=Python)
+[![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_workshop?style=flat&logo=github)](https://github.com/derpysquid10/tiny_workshop/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_workshop?style=flat&logo=target)](https://github.com/derpysquid10/tiny_workshop/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_workshop?style=flat&logo=git)](https://github.com/derpysquid10/tiny_workshop/commits)
+[![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd)](https://github.com/derpysquid10/tiny_workshop/blob/main/Tiny_Voice.pdf)
 
 
 
-## Setup
-We set up a virtual environment using conda, and our code is developed in Python 3.12.
+
+
+</div>
+
+
+## Installation
+We set up a virtual environment using conda, and our code is developed in Python 3.12.<br/>
+**NOTE:** Tiny Voice is has only been tested on Linux systems, if using Windows, please install [Windows System Linux ](https://learn.microsoft.com/en-us/windows/wsl/setup/environment#set-up-your-linux-username-and-password) (WSL):
 
 ```bash
 # Cloning the repository
@@ -26,7 +39,6 @@ conda env create -f environment.yml
 conda activate tiny-workshop
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu  # We want the CPU version of pytorch
 pip install -r requirements.txt
-pip install peft
 ```
 
 ## Quickstart Example
@@ -44,6 +56,7 @@ python tiny_workshop/example.py
 ```
 
 If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```conda install -c conda-forge libstdcxx-ng=12``` and re-run the baseline tests.
+
 
 
 
