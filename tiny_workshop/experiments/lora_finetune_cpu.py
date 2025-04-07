@@ -20,9 +20,9 @@ import argparse
 # Global variables
 today_date = datetime.now().date()
 DATASET = "isizulu"
-EXPERIMENT_NAME = f"lora_finetune_gpu_{today_date}"
+EXPERIMENT_NAME = f"lora_finetune_cpu_{today_date}"
 RANK = 4
-EXPERIMENT_TAG = ["ipex", "cpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["system", "cpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 @dataclass
@@ -137,7 +137,7 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 200
+    max_steps = 100
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_r={RANK}_lr={args.learning_rate}", 
         per_device_train_batch_size=batch_size,
@@ -147,7 +147,7 @@ def train_cpu():
         warmup_steps=20,
         # num_train_epochs=1,
         max_steps=max_steps,
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
@@ -161,7 +161,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=False,
+        use_cpu=True,
         use_ipex=False,
         remove_unused_columns=False,
         label_names=["labels"]
@@ -179,9 +179,9 @@ def train_cpu():
     )
 
     # # Evaluate the pretrained model before fine tuning
-    print("Evaluating the pre-trained model...")
-    eval_results = trainer.evaluate()
-    print("Evaluation results: ", eval_results)
+    # print("Evaluating the pre-trained model...")
+    # eval_results = trainer.evaluate()
+    # print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")
