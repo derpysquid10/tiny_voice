@@ -1,12 +1,13 @@
 from datasets import load_from_disk, DatasetDict
 from transformers import WhisperProcessor, WhisperTokenizer, WhisperForConditionalGeneration
 from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
+from transformers.utils import logging
+import warnings
+
 import torch
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 import evaluate
-import wandb
-import time
 import sys
 import os
 from peft import LoraConfig, get_peft_model, IA3Config, IA3Model
@@ -14,6 +15,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 from data_processing import load_data, processing_data
 from datetime import datetime
+
+logging.set_verbosity_warning() 
+warnings.filterwarnings("ignore") 
 
 # ------------------------------------------------------------------------------------
 # Helper functions for data collating, training, and evaluation
@@ -111,8 +115,8 @@ def data_pipeline(dataset: str) -> tuple[DatasetDict, WhisperProcessor]:
     # Load the dataset
     data_dir = f"{PROCESSED_DATA_DIR}_{dataset}"
     if not os.path.exists(data_dir):
-        load_data(dataset)
-        processing_data(dataset)
+        datadict = load_data(dataset)
+        processing_data(datadict, dataset)
     data = load_from_disk(data_dir)
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
     return data, processor
@@ -129,7 +133,9 @@ def load_model(peft: str) -> WhisperForConditionalGeneration:
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
     model.generation_config.language = "English"
     model.generation_config.task = "transcribe"
+    
     if peft == "partial":
+        model.config.use_cache = False
         model = setup_partial_finetuning(model)
     elif peft == "lora":
         model = setup_lora(model)
@@ -188,6 +194,7 @@ def setup_ia3(model: WhisperForConditionalGeneration) -> WhisperForConditionalGe
     """
     config = IA3Config(peft_type="IA3", target_modules=["k_proj", "v_proj", "q_proj", "fc1", "fc2"], feedforward_modules=["fc1", "fc2"])
     model = IA3Model(config=config, model=model, adapter_name="ia3")
+    model.model.get_encoder().conv1.register_forward_hook(make_inputs_require_grad)
     
     # Count and print trainable parameters
     trainable_params = 0
@@ -216,6 +223,7 @@ def setup_training_args(peft: str) -> Seq2SeqTrainingArguments:
     remove_unused = {"partial": True, "lora": False, "ia3": False}.get(peft, True)
     label_names = {"partial": None, "lora": ["labels"], "ia3": ["labels"]}.get(peft, ["labels"])
     save_safetensor = {"partial": True, "lora": True, "ia3": False}.get(peft, True)
+    gradient_checkpointing = {"partial": False, "lora": True, "ia3": True}.get(peft, True)
 
     # Define the training arguments
     training_args = Seq2SeqTrainingArguments(
@@ -226,14 +234,14 @@ def setup_training_args(peft: str) -> Seq2SeqTrainingArguments:
         warmup_steps=warmup_steps,
         lr_scheduler_type=scheduler,
         max_steps=max_steps,
-        gradient_checkpointing=True,
+        gradient_checkpointing=gradient_checkpointing,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=100,
-        eval_steps=100,
+        save_steps=20,
+        eval_steps=20,
         logging_steps=5,
         load_best_model_at_end=True,
         metric_for_best_model="wer",
@@ -288,9 +296,9 @@ def train_model(model: WhisperForConditionalGeneration,
     )
         
     # Evaluate the pretrained model before fine tuning
-    print("Evaluating the pre-trained model...")
-    eval_results = trainer.evaluate()
-    print("Evaluation results: ", eval_results)
+    # print("Evaluating the pre-trained model...")
+    # eval_results = trainer.evaluate()
+    # print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")

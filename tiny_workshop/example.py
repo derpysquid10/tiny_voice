@@ -13,9 +13,9 @@ def run(
     # Get user input for dataset and PEFT method
     # -----------------------------------------------------
     if dataset is None:
-        dataset = typer.prompt("Enter dataset (isixhosa, isizulu, swahili)").strip().lower()
+        dataset = typer.prompt("Enter dataset {isixhosa, isizulu (recommanded), swahili}").strip().lower()
     if peft is None:
-        peft = typer.prompt("Enter fine-tuning method (partial, lora, ia3)").strip().lower()
+        peft = typer.prompt("Enter fine-tuning method {partial, lora (recommanded), ia3}").strip().lower()
 
     # Validate
     valid_datasets = {"isixhosa", "isizulu", "swahili"}
