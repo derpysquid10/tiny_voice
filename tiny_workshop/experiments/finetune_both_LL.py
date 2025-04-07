@@ -13,12 +13,13 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 from datetime import datetime
+import argparse
 
 # Global variables
 today_date = datetime.now().date()
 DATASET = "isizulu"
 EXPERIMENT_NAME = f"partial_finetuning_both_{today_date}"
-EXPERIMENT_TAG = ["split", "gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["no_decay", "gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 @dataclass
@@ -81,6 +82,15 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 
 
 def train_cpu():
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train Whisper model with LoRA')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, 
+                        help='Learning rate for training (default: 1e-3)')
+    args = parser.parse_args()
+    
+    print(f"Using learning rate: {args.learning_rate}")
+
     print("Loading data...")
     afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
@@ -118,7 +128,7 @@ def train_cpu():
 
     wandb.init(
         project="tiny_workshop",
-        name=EXPERIMENT_NAME,
+        name=f"EXPERIMENT_NAME_lr={args.learning_rate}",
         tags=EXPERIMENT_TAG,
     )
 
@@ -126,14 +136,14 @@ def train_cpu():
     batch_size = 8
     max_steps = 200
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
+        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_lr={args.learning_rate}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-3,
+        learning_rate=args.learning_rate,
         warmup_steps=20,
         # num_train_epochs=1,
         max_steps=max_steps,
-        lr_scheduler_type="linear",
+        lr_scheduler_type="constant",
         gradient_checkpointing=False,
         fp16=True,
         eval_strategy="steps",

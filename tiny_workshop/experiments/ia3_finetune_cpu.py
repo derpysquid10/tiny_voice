@@ -18,7 +18,7 @@ from datetime import datetime
 today_date = datetime.now().date()
 DATASET = "isizulu"
 EXPERIMENT_NAME = f"ia3_finetune_gpu_{today_date}"
-EXPERIMENT_TAG = ["split", "gpu", "ia3", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["no_decay", "gpu", "ia3", DATASET, MODEL_NAME, f"{today_date}"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -145,7 +145,7 @@ def train_cpu():
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=2e-3,
-        lr_scheduler_type="cosine",
+        lr_scheduler_type="constant",
         warmup_steps=20,
         # num_train_epochs=1,
         max_steps=max_steps,

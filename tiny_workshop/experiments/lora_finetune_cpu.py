@@ -14,6 +14,7 @@ from peft import LoraConfig, PeftModel, LoraModel, LoraConfig, get_peft_model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 from datetime import datetime
+import argparse
 
 
 # Global variables
@@ -21,7 +22,7 @@ today_date = datetime.now().date()
 DATASET = "isizulu"
 EXPERIMENT_NAME = f"lora_finetune_gpu_{today_date}"
 RANK = 4
-EXPERIMENT_TAG = ["split", "gpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["ipex", "cpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 @dataclass
@@ -94,6 +95,14 @@ def train_cpu():
     """
     The main function to train the model on CPU
     """
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train Whisper model with LoRA')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, 
+                        help='Learning rate for training (default: 1e-3)')
+    args = parser.parse_args()
+    
+    print(f"Using learning rate: {args.learning_rate}")
     print("Loading data...")
     # afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
@@ -122,19 +131,19 @@ def train_cpu():
 
     wandb.init(
         project="tiny_workshop",
-        name=f"{EXPERIMENT_NAME}_r={RANK}",
+        name=f"{EXPERIMENT_NAME}_r={RANK}_lr={args.learning_rate}",
         tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 100
+    max_steps = 200
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_r={RANK}", 
+        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_r={RANK}_lr={args.learning_rate}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-3,
-        lr_scheduler_type='linear',
+        learning_rate=args.learning_rate,
+        lr_scheduler_type='cosine',
         warmup_steps=20,
         # num_train_epochs=1,
         max_steps=max_steps,
@@ -188,21 +197,6 @@ def train_cpu():
     print("Evaluation results: ", eval_results)
     wandb.log({
         "final_overall_wer": eval_results["eval_wer"],
-    })
-
-    print("Evaluating on general domain...")
-    eval_results_general = trainer.evaluate(eval_dataset=afrispeech_split["test_general"])
-    print("General domain fine-tuned model WER: ", eval_results_general)
-    wandb.log({
-        "general_domain_wer": eval_results_general["eval_wer"],
-    })
-
-    # Evaluate on "clinical" as well
-    print("Evaluating on clinical domain...")
-    eval_results_clinical = trainer.evaluate(eval_dataset=afrispeech_split["test_clinical"])
-    print("Clinical domain fine-tuned model WER: ", eval_results_clinical)
-    wandb.log({
-        "clinical_domain_wer": eval_results_clinical["eval_wer"],
     })
 
 if __name__ == "__main__":
