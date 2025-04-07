@@ -135,7 +135,7 @@ def train_cpu():
         greater_is_better=False,
         push_to_hub=False,
         use_cpu=True,
-        use_ipex=False,
+        use_ipex=True,
     )
 
     # Create the trainer
