@@ -1,6 +1,5 @@
 import typer
 from lib.tiny_voice import data_pipeline, load_model, setup_training_args, train_model
-from datetime import datetime
 
 app = typer.Typer()
 

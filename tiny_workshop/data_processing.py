@@ -234,12 +234,50 @@ def processing_data(data: DatasetDict, dataset: str) -> DatasetDict:
     print(f"Dataset processed successfully! Saved to {PROCESSED_DATA_DIR}_{dataset}")
     return data
 
+
+def processing_data_split(data: DatasetDict, dataset: str) -> DatasetDict:
+    """
+    Process the data for training and split test set by domain.
+    """
+    # 1. Downsample audio from 48kHz -> 16kHz (same as before)
+    data = data.cast_column("audio", Audio(sampling_rate=16000))
+
+    # 2. Map the prepare_dataset function to train/val *as usual* (optional if you want them preprocessed here)
+    data["train"] = data["train"].map(prepare_dataset, remove_columns=data["train"].column_names, num_proc=4)
+    data["val"]   = data["val"].map(prepare_dataset, remove_columns=data["val"].column_names, num_proc=4)
+    
+    # 3. CREATE DOMAIN-SPLIT TEST SETS
+    test_general  = data["test"].filter(lambda x: x["domain"] == "general")
+    test_clinical = data["test"].filter(lambda x: x["domain"] == "clinical")
+
+    # 4. Preprocess those domain splits
+    test_general  = test_general.map(prepare_dataset, remove_columns=data["test"].column_names, num_proc=4)
+    test_clinical = test_clinical.map(prepare_dataset, remove_columns=data["test"].column_names, num_proc=4)
+
+    # 5. Assemble a new DatasetDict with domain-based test splits
+    data_split = DatasetDict({
+        "train": data["train"],
+        "val":   data["val"],
+        "test_general":  test_general,
+        "test_clinical": test_clinical
+    })
+
+    # 6. SAVE the new domain-split dataset to disk (note the new directory name)
+    new_dir = f"{PROCESSED_DATA_DIR}_split_{dataset}"
+    data_split.save_to_disk(new_dir)
+    print(f"Domain-split dataset saved to {new_dir}")
+
+    return data_split
+
+
 @app.command()
 def main(
     
     dataset: str = typer.Option("isizulu", help="Dataset to load. Must be one of 'isizulu', 'swahili', 'isixhosa'"),
     perform_eda: bool = typer.Option(True),
-    process_data: bool = typer.Option(True)
+    process_data: bool = typer.Option(True),
+    split_data: bool = typer.Option(False, help="Whether to split the test set by domain (only for isizulu dataset)"
+        "This will create a new dataset with two test sets: test_general and test_clinical"),
 ):
     """
     Main function to process African speech datasets.
@@ -266,7 +304,10 @@ def main(
     if perform_eda:
         eda(afrispeech, dataset)
     if process_data:
-        processing_data(afrispeech, dataset)
+        if split_data:
+            processing_data_split(afrispeech, dataset)
+        else:
+            processing_data(afrispeech, dataset)
 
 if __name__ == "__main__":
     app()

@@ -16,9 +16,9 @@ from datetime import datetime
 
 # Global variables
 today_date = datetime.now().date()
-DATASET = "swahili"
+DATASET = "isizulu"
 EXPERIMENT_NAME = f"partial_finetuning_both_{today_date}"
-EXPERIMENT_TAG = ["gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["split", "gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 @dataclass
@@ -83,6 +83,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 def train_cpu():
     print("Loading data...")
     afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
+    afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
@@ -123,23 +124,24 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    # max_steps = 200
+    max_steps = 200
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / EXPERIMENT_NAME, 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-3,
         warmup_steps=20,
-        num_train_epochs=1,
-        lr_scheduler_type="cosine",
+        # num_train_epochs=1,
+        max_steps=max_steps,
+        lr_scheduler_type="linear",
         gradient_checkpointing=False,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=100,
-        eval_steps=100,
+        save_steps=25,
+        eval_steps=25,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,
@@ -178,6 +180,24 @@ def train_cpu():
     print("Evaluating the finetuned model...")
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
+    wandb.log({
+        "final_overall_wer": eval_results["eval_wer"],
+    })
+
+    print("Evaluating on general domain...")
+    eval_results_general = trainer.evaluate(eval_dataset=afrispeech_split["test_general"])
+    print("General domain fine-tuned model WER: ", eval_results_general)
+    wandb.log({
+        "general_domain_wer": eval_results_general["eval_wer"],
+    })
+
+    # Evaluate on "clinical" as well
+    print("Evaluating on clinical domain...")
+    eval_results_clinical = trainer.evaluate(eval_dataset=afrispeech_split["test_clinical"])
+    print("Clinical domain fine-tuned model WER: ", eval_results_clinical)
+    wandb.log({
+        "clinical_domain_wer": eval_results_clinical["eval_wer"],
+    })
 
 if __name__ == "__main__":
     train_cpu()

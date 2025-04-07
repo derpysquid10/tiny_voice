@@ -16,9 +16,9 @@ from datetime import datetime
 
 # Global variables
 today_date = datetime.now().date()
-DATASET = "swahili"
+DATASET = "isizulu"
 EXPERIMENT_NAME = f"baseline_finetune_gpu_{today_date}"
-EXPERIMENT_TAG = ["gpu", "baseline", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_TAG = ["split", "gpu", "baseline", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 
@@ -84,6 +84,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 def train_gpu():
     print("Loading data...")
     afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
+    afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
@@ -116,15 +117,15 @@ def train_gpu():
         learning_rate=1e-5,
         warmup_steps=20,
         lr_scheduler_type="linear",
-        num_train_epochs=1,
+        max_steps=max_steps,
         gradient_checkpointing=True,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=100,
-        eval_steps=100,
+        save_steps=25,
+        eval_steps=25,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,
@@ -149,6 +150,18 @@ def train_gpu():
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
 
+    # Evaluate on general domain dataset
+    print("Evaluating the pre-trained model on general dataset...")
+    eval_results = trainer.evaluate(afrispeech_split["test_general"])
+    print("Evaluation results: ", eval_results)
+
+    # Evaluate on clinical dataset
+    print("Evaluating the pre-trained model on domain-specific dataset...")
+    eval_results = trainer.evaluate(afrispeech_split["test_clinical"])
+    print("Evaluation results: ", eval_results)
+
+    
+
     # Train the model
     print("Training the model...")
     start_time = time.time()
@@ -161,6 +174,24 @@ def train_gpu():
     print("Evaluating the finetuned model...")
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
+    wandb.log({
+        "final_overall_wer": eval_results["eval_wer"],
+    })
+
+    print("Evaluating on general domain...")
+    eval_results_general = trainer.evaluate(eval_dataset=afrispeech_split["test_general"])
+    print("General domain fine-tuned model WER: ", eval_results_general)
+    wandb.log({
+        "general_domain_wer": eval_results_general["eval_wer"],
+    })
+
+    # Evaluate on "clinical" as well
+    print("Evaluating on clinical domain...")
+    eval_results_clinical = trainer.evaluate(eval_dataset=afrispeech_split["test_clinical"])
+    print("Clinical domain fine-tuned model WER: ", eval_results_clinical)
+    wandb.log({
+        "clinical_domain_wer": eval_results_clinical["eval_wer"],
+    })
 
 if __name__ == "__main__":
     train_gpu()

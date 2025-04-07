@@ -216,9 +216,9 @@ def setup_training_args(peft: str) -> Seq2SeqTrainingArguments:
         training_args (Seq2SeqTrainingArguments): The training arguments for the model
     """
     # PEFT specific training arguments
-    max_steps = {"partial": 200, "lora": 100, "ia3": 100}.get(peft, 100)
-    learning_rate = {"partial": 1e-3, "lora": 1e-3, "ia3": 5e-4}.get(peft, 1e-3)
-    warmup_steps = {"partial": 20, "lora": 0, "ia3": 0}.get(peft, 20)
+    max_steps = {"partial": 200, "lora": 100, "ia3": 200}.get(peft, 100)
+    learning_rate = {"partial": 1e-3, "lora": 1e-3, "ia3": 2e-3}.get(peft, 1e-3)
+    warmup_steps = {"partial": 20, "lora": 0, "ia3": 20}.get(peft, 20)
     scheduler = {"partial": "linear", "lora": "constant", "ia3": "cosine"}.get(peft, "linear")
     remove_unused = {"partial": True, "lora": False, "ia3": False}.get(peft, True)
     label_names = {"partial": None, "lora": ["labels"], "ia3": ["labels"]}.get(peft, ["labels"])
