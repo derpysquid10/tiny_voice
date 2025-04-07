@@ -12,10 +12,13 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
+from datetime import datetime
 
 # Global variables
-EXPERIMENT_NAME = "finetune_both_LL"
-EXPERIMENT_TAG = ["cpu", "partial_finetuning"]
+today_date = datetime.now().date()
+DATASET = "isixhosa"
+EXPERIMENT_NAME = f"partial_finetuning_both_{today_date}"
+EXPERIMENT_TAG = ["gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
 
 
 @dataclass
@@ -79,7 +82,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 
 def train_cpu():
     print("Loading data...")
-    afrispeech = load_from_disk(PROCESSED_DATA_DIR)
+    afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
@@ -120,16 +123,17 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 100
+    max_steps = 200
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / EXPERIMENT_NAME, 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-5,
+        learning_rate=5e-4,
         warmup_steps=20,
         max_steps=max_steps,
+        lr_scheduler_type="cosine",
         gradient_checkpointing=False,
-        fp16=False,
+        fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
@@ -142,7 +146,7 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=True,
+        use_cpu=False,
         use_ipex=False,
     )
 
@@ -162,16 +166,18 @@ def train_cpu():
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
 
-    for name, param in model.named_parameters():
-        print(name, param.requires_grad)
-
     # Train the model
     print("Training the model...")
     start_time = time.time()
     trainer.train()
     end_time = time.time()
-    time_per_sample = (end_time - start_time) / (max_steps * batch_size)
-    wandb.log({"time_per_sample": time_per_sample})
+    # time_per_sample = (end_time - start_time) / (max_steps * batch_size)
+    # wandb.log({"time_per_sample": time_per_sample})
+
+    # Final evaluation
+    print("Evaluating the finetuned model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
 
 if __name__ == "__main__":
     train_cpu()

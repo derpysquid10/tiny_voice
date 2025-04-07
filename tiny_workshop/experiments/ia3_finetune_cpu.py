@@ -12,11 +12,13 @@ import os
 from peft import IA3Config, IA3Model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
-
+from datetime import datetime
 
 # Global variables
-EXPERIMENT_NAME = "ia3_finetune_gpu"
-EXPERIMENT_TAG = ["gpu", "ia3"]
+today_date = datetime.now().date()
+DATASET = "isixhosa"
+EXPERIMENT_NAME = f"ia3_finetune_gpu_{today_date}"
+EXPERIMENT_TAG = ["gpu", "ia3", DATASET, MODEL_NAME, f"{today_date}"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -87,7 +89,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 
 def train_cpu():
     print("Loading data...")
-    afrispeech = load_from_disk(PROCESSED_DATA_DIR)
+    afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
@@ -134,23 +136,23 @@ def train_cpu():
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 200
+    # max_steps = 200
     training_args = Seq2SeqTrainingArguments(
         output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=5e-3,
-        lr_scheduler_type="cosine",
-        warmup_steps=0,
-        max_steps=max_steps,
+        learning_rate=5e-4,
+        lr_scheduler_type="linear",
+        warmup_steps=20,
+        num_train_epochs=10,
         gradient_checkpointing=True,
-        fp16=True,
+        fp16=False,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
         generation_max_length=100,
-        save_steps=25,
-        eval_steps=25,
+        save_steps=20,
+        eval_steps=20,
         logging_steps=5,
         report_to=["wandb"],
         load_best_model_at_end=True,
@@ -176,17 +178,17 @@ def train_cpu():
     )
 
     # Evaluate the pretrained model before fine tuning
-    # print("Evaluating the pre-trained model...")
-    # eval_results = trainer.evaluate()
-    # print("Evaluation results: ", eval_results)
+    print("Evaluating the pre-trained model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")
     start_time = time.time()
     trainer.train()
     end_time = time.time()
-    time_per_sample = (end_time - start_time) / (max_steps * batch_size)
-    wandb.log({"time_per_sample": time_per_sample})
+    # time_per_sample = (end_time - start_time) / (max_steps * batch_size)
+    # wandb.log({"time_per_sample": time_per_sample})
 
     # Final evaluation
     print("Evaluating the finetuned model...")

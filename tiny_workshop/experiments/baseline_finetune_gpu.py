@@ -12,6 +12,15 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
+from datetime import datetime
+
+# Global variables
+today_date = datetime.now().date()
+DATASET = "isixhosa"
+EXPERIMENT_NAME = f"baseline_finetune_gpu_{today_date}"
+EXPERIMENT_TAG = ["gpu", "lora", DATASET, MODEL_NAME, f"{today_date}"]
+
+
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -74,7 +83,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 
 def train_gpu():
     print("Loading data...")
-    afrispeech = load_from_disk(PROCESSED_DATA_DIR)
+    afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
@@ -93,8 +102,8 @@ def train_gpu():
 
     wandb.init(
         project="tiny_workshop",
-        name="baseline_finetune_gpu",
-        tags=["baseline", "gpu"],
+        name=EXPERIMENT_NAME,
+        tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
@@ -105,8 +114,9 @@ def train_gpu():
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
-        warmup_steps=20,
-        max_steps=max_steps,
+        warmup_steps=0,
+        lr_scheduler_type="constant",
+        num_train_epochs=3,
         gradient_checkpointing=True,
         fp16=True,
         eval_strategy="steps",
@@ -144,8 +154,13 @@ def train_gpu():
     start_time = time.time()
     trainer.train()
     end_time = time.time()
-    time_per_sample = (end_time - start_time) / (max_steps * batch_size)
-    wandb.log({"time_per_sample": time_per_sample})
+    # time_per_sample = (end_time - start_time) / (max_steps * batch_size)
+    # wandb.log({"time_per_sample": time_per_sample})
+
+    # Final evaluation
+    print("Evaluating the finetuned model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
 
 if __name__ == "__main__":
     train_gpu()
