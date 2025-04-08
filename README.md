@@ -50,7 +50,7 @@ We first have to load the dataset:
 python tiny_workshop/data_processing.py --process-data
 ```
 
-The example.py script fine-tunes the model using one of partial fine-tuning, LoRA, or IA3 on one of 3 configs of the dataset
+The example.py script fine-tunes the model using one of partial fine-tuning, LoRA, or IA3 on one of 2 configs of the dataset
 ```bash
 python tiny_workshop/example.py
 ```
