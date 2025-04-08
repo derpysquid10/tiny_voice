@@ -1,4 +1,4 @@
-name: tiny-workshop
+name: tiny-voice
 channels:
   - defaults
 dependencies:

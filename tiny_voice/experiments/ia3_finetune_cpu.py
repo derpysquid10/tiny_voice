@@ -7,15 +7,18 @@ from typing import Any, Dict, List, Union
 import evaluate
 import wandb
 import time
-import torch.quantization
 import sys
 import os
+from peft import IA3Config, IA3Model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
+from datetime import datetime
 
 # Global variables
-EXPERIMENT_NAME = "torch_quantization_cpu"
-EXPERIMENT_TAG = ["torch_quantization", "cpu"]
+today_date = datetime.now().date()
+DATASET = "isizulu"
+EXPERIMENT_NAME = f"ia3_finetune_gpu_{today_date}"
+EXPERIMENT_TAG = ["no_decay", "gpu", "ia3", DATASET, MODEL_NAME, f"{today_date}"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -55,6 +58,16 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         return batch
 
 
+class CustomTrainer(Seq2SeqTrainer):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        # Remove any extra keys that the model doesn't support
+        return super().compute_loss(model, inputs, return_outputs=return_outputs)
+
+
+def make_inputs_require_grad(module, input, output):
+    output.requires_grad_(True)
+
+
 def compute_metrics(pred: any) -> Dict[str, float]:
     """
     Compute the evaluation metric for the predicted transcript
@@ -78,55 +91,66 @@ def compute_metrics(pred: any) -> Dict[str, float]:
 
 def train_cpu():
     print("Loading data...")
-    afrispeech = load_from_disk(PROCESSED_DATA_DIR)
+    afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
+    afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
-    
-    quantized_model = torch.quantization.quantize_dynamic(
-        model, {torch.nn.Linear}, dtype=torch.qint8)
-    
-    quantized_model.generation_config.language = "English"
-    quantized_model.generation_config.task = "transcribe"
-    
-    # print memory size of weights
-    total_size = sum(p.numel() * p.element_size() for p in model.parameters())
+    model.generation_config.language = "English"
+    model.generation_config.task = "transcribe"
 
-    # Convert to MB
-    print(f"Model weight size: {total_size / (1024 ** 2):.2f} MB")
-    total_quantized_size = sum(p.numel() * p.element_size() for p in quantized_model.parameters())
-
-    # Convert to MB
-    print(f"Quantized Model weight size: {total_quantized_size / (1024 ** 2):.2f} MB")
+    # IA3 configuration
+    # for name, param in model.named_parameters():
+    #     print(name, param.requires_grad)
+    config = IA3Config(peft_type="IA3", target_modules=["k_proj", "v_proj", "q_proj", "fc1", "fc2"], feedforward_modules=["fc1", "fc2"])
+    model = IA3Model(config=config, model=model, adapter_name="ia3")
     
+    # Count and print trainable parameters
+    trainable_params = 0
+    all_params = 0
+    for name, param in model.named_parameters():
+        all_params += param.numel()
+        if param.requires_grad:
+            trainable_params += param.numel()
+    
+    print(f"Trainable parameters: {trainable_params}")
+    print(f"All parameters: {all_params}")
+    print(f"Trainable%: {100 * trainable_params / all_params:.2f}%")
+    # model.print_trainable_parameters()
+
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
         processor=processor,
-        decoder_start_token_id=quantized_model.config.decoder_start_token_id,
+        decoder_start_token_id=model.config.decoder_start_token_id,
     )
 
+    # Register the hook to make the initial inputs require grad
+    model.model.get_encoder().conv1.register_forward_hook(make_inputs_require_grad)
+    
     # Define the evaluation metric (word error rate)
     wer_metric = evaluate.load("wer")
 
     wandb.init(
-        project="tiny_workshop",
-        name=EXPERIMENT_NAME,
+        project="tiny_voice",
+        name=f"{EXPERIMENT_NAME}",
         tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 2
+    max_steps = 200
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
+        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=1e-5,
+        learning_rate=2e-3,
+        lr_scheduler_type="constant",
         warmup_steps=20,
+        # num_train_epochs=1,
         max_steps=max_steps,
         gradient_checkpointing=True,
-        fp16=False,
+        fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
@@ -139,14 +163,17 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=True,
+        use_cpu=False,
         use_ipex=False,
+        remove_unused_columns=False,
+        label_names=["labels"],
+        save_safetensors=False,
     )
 
     # Create the trainer
-    trainer = Seq2SeqTrainer(
+    trainer = CustomTrainer(
         args=training_args,
-        model=quantized_model,
+        model=model,
         train_dataset=afrispeech["train"],
         eval_dataset=afrispeech["test"],
         data_collator=data_collator,
@@ -164,8 +191,31 @@ def train_cpu():
     start_time = time.time()
     trainer.train()
     end_time = time.time()
-    time_per_sample = (end_time - start_time) / (max_steps * batch_size)
-    wandb.log({"time_per_sample": time_per_sample})
+    # time_per_sample = (end_time - start_time) / (max_steps * batch_size)
+    # wandb.log({"time_per_sample": time_per_sample})
+
+    # Final evaluation
+    print("Evaluating the finetuned model...")
+    eval_results = trainer.evaluate()
+    print("Evaluation results: ", eval_results)
+    wandb.log({
+        "final_overall_wer": eval_results["eval_wer"],
+    })
+
+    print("Evaluating on general domain...")
+    eval_results_general = trainer.evaluate(eval_dataset=afrispeech_split["test_general"])
+    print("General domain fine-tuned model WER: ", eval_results_general)
+    wandb.log({
+        "general_domain_wer": eval_results_general["eval_wer"],
+    })
+
+    # Evaluate on "clinical" as well
+    print("Evaluating on clinical domain...")
+    eval_results_clinical = trainer.evaluate(eval_dataset=afrispeech_split["test_clinical"])
+    print("Clinical domain fine-tuned model WER: ", eval_results_clinical)
+    wandb.log({
+        "clinical_domain_wer": eval_results_clinical["eval_wer"],
+    })
 
 if __name__ == "__main__":
     train_cpu()

@@ -13,11 +13,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
-# Global variables
-EXPERIMENT_NAME = "finetune_decode_LL"
-EXPERIMENT_TAG = ["cpu", "partial_finetuning"]
-
-
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
@@ -86,14 +81,6 @@ def train_cpu():
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
     model.generation_config.language = "English"
     model.generation_config.task = "transcribe"
-    model.config.use_cache = False
-
-    # Finetune only the last layer of the decoder
-    for param in model.parameters():
-        param.requires_grad = False
-    for name, param in model.model.decoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
-            param.requires_grad = True
 
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
@@ -105,22 +92,22 @@ def train_cpu():
     wer_metric = evaluate.load("wer")
 
     wandb.init(
-        project="tiny_workshop",
-        name=EXPERIMENT_NAME,
-        tags=EXPERIMENT_TAG,
+        project="tiny_voice",
+        name="baseline_finetune_cpu",
+        tags=["baseline", "cpu"],
     )
 
     # Define the training arguments
     batch_size = 8
     max_steps = 100
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
+        output_dir= MODELS_DIR / "baseline_cpu", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
         warmup_steps=20,
         max_steps=max_steps,
-        gradient_checkpointing=False,
+        gradient_checkpointing=True,
         fp16=False,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
@@ -153,9 +140,6 @@ def train_cpu():
     print("Evaluating the pre-trained model...")
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
-
-    for name, param in model.named_parameters():
-        print(name, param.requires_grad)
 
     # Train the model
     print("Training the model...")

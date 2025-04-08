@@ -7,11 +7,15 @@ from typing import Any, Dict, List, Union
 import evaluate
 import wandb
 import time
-
+import torch.quantization
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
+
+# Global variables
+EXPERIMENT_NAME = "torch_quantization_cpu"
+EXPERIMENT_TAG = ["torch_quantization", "cpu"]
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -79,29 +83,43 @@ def train_cpu():
 
     print("Loading pre-trained model...")
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
-    model.generation_config.language = "English"
-    model.generation_config.task = "transcribe"
+    
+    quantized_model = torch.quantization.quantize_dynamic(
+        model, {torch.nn.Linear}, dtype=torch.qint8)
+    
+    quantized_model.generation_config.language = "English"
+    quantized_model.generation_config.task = "transcribe"
+    
+    # print memory size of weights
+    total_size = sum(p.numel() * p.element_size() for p in model.parameters())
 
+    # Convert to MB
+    print(f"Model weight size: {total_size / (1024 ** 2):.2f} MB")
+    total_quantized_size = sum(p.numel() * p.element_size() for p in quantized_model.parameters())
+
+    # Convert to MB
+    print(f"Quantized Model weight size: {total_quantized_size / (1024 ** 2):.2f} MB")
+    
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
         processor=processor,
-        decoder_start_token_id=model.config.decoder_start_token_id,
+        decoder_start_token_id=quantized_model.config.decoder_start_token_id,
     )
 
     # Define the evaluation metric (word error rate)
     wer_metric = evaluate.load("wer")
 
     wandb.init(
-        project="tiny_workshop",
-        name="baseline_finetune_cpu",
-        tags=["baseline", "cpu"],
+        project="tiny_voice",
+        name=EXPERIMENT_NAME,
+        tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 100
+    max_steps = 2
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / "baseline_cpu", 
+        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
@@ -128,7 +146,7 @@ def train_cpu():
     # Create the trainer
     trainer = Seq2SeqTrainer(
         args=training_args,
-        model=model,
+        model=quantized_model,
         train_dataset=afrispeech["train"],
         eval_dataset=afrispeech["test"],
         data_collator=data_collator,

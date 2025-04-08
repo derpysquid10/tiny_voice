@@ -13,11 +13,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 
-# Global variables
-EXPERIMENT_NAME = "finetune_encode_LL"
-EXPERIMENT_TAG = ["cpu", "partial_finetuning"]
-
-
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
@@ -77,23 +72,16 @@ def compute_metrics(pred: any) -> Dict[str, float]:
     return {"wer": wer}
 
 
-def train_cpu():
+def train_cpu_ipex():
     print("Loading data...")
     afrispeech = load_from_disk(PROCESSED_DATA_DIR)
     processor = WhisperProcessor.from_pretrained(MODEL_NAME, cache_dir=HF_CACHE_DIR, language="English", task="transcribe")
 
     print("Loading pre-trained model...")
-    model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
+    model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-base")
     model.generation_config.language = "English"
     model.generation_config.task = "transcribe"
-    model.config.use_cache = False
-
-    # Finetune only the last layer of the encoder
-    for param in model.parameters():
-        param.requires_grad = False
-    for name, param in model.model.encoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
-            param.requires_grad = True
+    model.generation_config.forced_decoder_ids = None
 
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
@@ -105,23 +93,23 @@ def train_cpu():
     wer_metric = evaluate.load("wer")
 
     wandb.init(
-        project="tiny_workshop",
-        name=EXPERIMENT_NAME,
-        tags=EXPERIMENT_TAG,
+        project="tiny_voice",
+        name="finetune_ipex",
+        tags=["cpu"],
     )
 
     # Define the training arguments
     batch_size = 8
     max_steps = 100
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / EXPERIMENT_NAME, 
+        output_dir= MODELS_DIR / "ipex", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
         learning_rate=1e-5,
         warmup_steps=20,
         max_steps=max_steps,
-        gradient_checkpointing=False,
-        fp16=False,
+        gradient_checkpointing=True,
+        fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
         predict_with_generate=True,
@@ -150,12 +138,9 @@ def train_cpu():
     )
 
     # Evaluate the pretrained model before fine tuning
-    print("Evaluating the pre-trained model...")
-    eval_results = trainer.evaluate()
-    print("Evaluation results: ", eval_results)
-
-    for name, param in model.named_parameters():
-        print(name, param.requires_grad)
+    # print("Evaluating the pre-trained model...")
+    # eval_results = trainer.evaluate()
+    # print("Evaluation results: ", eval_results)
 
     # Train the model
     print("Training the model...")
@@ -166,4 +151,4 @@ def train_cpu():
     wandb.log({"time_per_sample": time_per_sample})
 
 if __name__ == "__main__":
-    train_cpu()
+    train_cpu_ipex()

@@ -13,13 +13,13 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import HF_CACHE_DIR, PROCESSED_DATA_DIR, MODEL_NAME, MODELS_DIR
 from datetime import datetime
-import argparse
 
 # Global variables
 today_date = datetime.now().date()
 DATASET = "isizulu"
-EXPERIMENT_NAME = f"partial_finetuning_both_{today_date}"
-EXPERIMENT_TAG = ["no_decay", "gpu", "partial_funetining", DATASET, MODEL_NAME, f"{today_date}"]
+EXPERIMENT_NAME = f"baseline_finetune_gpu_{today_date}"
+EXPERIMENT_TAG = ["split", "gpu", "baseline", DATASET, MODEL_NAME, f"{today_date}"]
+
 
 
 @dataclass
@@ -81,16 +81,7 @@ def compute_metrics(pred: any) -> Dict[str, float]:
     return {"wer": wer}
 
 
-def train_cpu():
-
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Train Whisper model with LoRA')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, 
-                        help='Learning rate for training (default: 1e-3)')
-    args = parser.parse_args()
-    
-    print(f"Using learning rate: {args.learning_rate}")
-
+def train_gpu():
     print("Loading data...")
     afrispeech = load_from_disk(f"{PROCESSED_DATA_DIR}_{DATASET}")
     afrispeech_split = load_from_disk(f"{PROCESSED_DATA_DIR}_split_{DATASET}")
@@ -100,22 +91,6 @@ def train_cpu():
     model = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
     model.generation_config.language = "English"
     model.generation_config.task = "transcribe"
-    model.config.use_cache = False
-
-    # Finetune the last layer of the decoder and the encoder
-    for param in model.parameters():
-        param.requires_grad = False
-    for name, param in model.model.decoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
-            param.requires_grad = True
-    for name, param in model.model.encoder.layers[-1].named_parameters():
-        if "fc" in name or "final_layer_norm" in name: 
-            param.requires_grad = True
-    
-    # Count trainable parameters
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"Trainable parameters: {trainable_params:,} ({trainable_params/total_params:.2%} of total)")
 
     print("Setting data collator, eval metrics, and training arguments...")
     data_collator = DataCollatorSpeechSeq2SeqWithPadding(
@@ -127,24 +102,23 @@ def train_cpu():
     wer_metric = evaluate.load("wer")
 
     wandb.init(
-        project="tiny_workshop",
-        name=f"EXPERIMENT_NAME_lr={args.learning_rate}",
+        project="tiny_voice",
+        name=EXPERIMENT_NAME,
         tags=EXPERIMENT_TAG,
     )
 
     # Define the training arguments
     batch_size = 8
-    max_steps = 200
+    max_steps = 100
     training_args = Seq2SeqTrainingArguments(
-        output_dir= MODELS_DIR / f"{EXPERIMENT_NAME}_lr={args.learning_rate}", 
+        output_dir= MODELS_DIR / "baseline_gpu", 
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=1, 
-        learning_rate=args.learning_rate,
+        learning_rate=1e-5,
         warmup_steps=20,
-        # num_train_epochs=1,
+        lr_scheduler_type="linear",
         max_steps=max_steps,
-        lr_scheduler_type="constant",
-        gradient_checkpointing=False,
+        gradient_checkpointing=True,
         fp16=True,
         eval_strategy="steps",
         per_device_eval_batch_size=8,
@@ -158,8 +132,6 @@ def train_cpu():
         metric_for_best_model="wer",
         greater_is_better=False,
         push_to_hub=False,
-        use_cpu=False,
-        use_ipex=False,
     )
 
     # Create the trainer
@@ -177,6 +149,18 @@ def train_cpu():
     print("Evaluating the pre-trained model...")
     eval_results = trainer.evaluate()
     print("Evaluation results: ", eval_results)
+
+    # Evaluate on general domain dataset
+    print("Evaluating the pre-trained model on general dataset...")
+    eval_results = trainer.evaluate(afrispeech_split["test_general"])
+    print("Evaluation results: ", eval_results)
+
+    # Evaluate on clinical dataset
+    print("Evaluating the pre-trained model on domain-specific dataset...")
+    eval_results = trainer.evaluate(afrispeech_split["test_clinical"])
+    print("Evaluation results: ", eval_results)
+
+    
 
     # Train the model
     print("Training the model...")
@@ -210,4 +194,4 @@ def train_cpu():
     })
 
 if __name__ == "__main__":
-    train_cpu()
+    train_gpu()

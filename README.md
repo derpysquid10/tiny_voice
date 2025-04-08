@@ -1,5 +1,5 @@
 <p align="center">
-   <img src="figures/tiny_workshop_banner.jpg" width="800" title="hover text">
+   <img src="figures/tiny_voice_banner.jpg" width="800" title="hover text">
 
 </p>
 <br />
@@ -12,10 +12,10 @@ An open-source, user friendly library to fine-tune speech-to-text models on edge
 
 
 ![Static Badge](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=Python)
-[![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_workshop?style=flat&logo=github)](https://github.com/derpysquid10/tiny_workshop/graphs/contributors)
-[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_workshop?style=flat&logo=target)](https://github.com/derpysquid10/tiny_workshop/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_workshop?style=flat&logo=git)](https://github.com/derpysquid10/tiny_workshop/commits)
-[![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd)](https://github.com/derpysquid10/tiny_workshop/blob/main/Tiny_Voice.pdf)
+[![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_voice?style=flat&logo=github)](https://github.com/derpysquid10/tiny_voice/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_voice?style=flat&logo=target)](https://github.com/derpysquid10/tiny_voice/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_voice?style=flat&logo=git)](https://github.com/derpysquid10/tiny_voice/commits)
+[![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd)](https://github.com/derpysquid10/tiny_voice/blob/main/Tiny_Voice.pdf)
 
 
 
@@ -30,13 +30,13 @@ We set up a virtual environment using conda, and our code is developed in Python
 
 ```bash
 # Cloning the repository
-git clone https://github.com/derpysquid10/tiny_workshop.git
+git clone https://github.com/derpysquid10/tiny_voice.git
 
-cd tiny_workshop
+cd tiny_voice
 
 # Setting up environment and installing libraries
 conda env create -f environment.yml
-conda activate tiny-workshop
+conda activate tiny-voice
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu  # We want the CPU version of pytorch
 pip install -r requirements.txt
 ```
@@ -47,12 +47,12 @@ This section provides an example of using Tiny Voice to fine-tune OpenAI's Whisp
 
 We first have to load the dataset:
 ```bash
-python tiny_workshop/data_processing.py --process-data
+python tiny_voice/data_processing.py --process-data
 ```
 
 The example.py script fine-tunes the model using one of partial fine-tuning, LoRA, or IA3 on one of 3 configs of the dataset
 ```bash
-python tiny_workshop/example.py
+python tiny_voice/example.py
 ```
 
 If an error ```version `GLIBCXX_3.4.30' not found``` is encountered, run ```conda install -c conda-forge libstdcxx-ng=12``` and re-run the baseline tests.
