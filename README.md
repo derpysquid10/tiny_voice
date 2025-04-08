@@ -13,8 +13,7 @@ An open-source, user friendly library to fine-tune speech-to-text models on edge
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=Python&logoColor=white)
 [![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_voice?style=flat&logo=github&logoColor=white)](https://github.com/derpysquid10/tiny_voice/graphs/contributors)
-[![issues](https://img.shields.io/github/issues/derpysquid10/tiny_voice?dummy=123456)](https://img.shields.io/github/issues/derpysquid10/tiny_voice?cacheSeconds=3600
-)
+[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_voice?style=flat&logo=target&logoColor=white)](https://github.com/derpysquid10/tiny_voice/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_voice?style=flat&logo=git&logoColor=white)](https://github.com/derpysquid10/tiny_voice/commits)
 [![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd&logoColor=white)](https://github.com/derpysquid10/tiny_voice/blob/main/Tiny_Voice.pdf)
 
