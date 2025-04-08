@@ -11,11 +11,12 @@ By Tiny Workshop<br/>
 An open-source, user friendly library to fine-tune speech-to-text models on edge device CPUs. <br/>
 
 
-![Static Badge](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=Python)
-[![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_voice?style=flat&logo=github)](https://github.com/derpysquid10/tiny_voice/graphs/contributors)
-[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_voice?style=flat&logo=target)](https://github.com/derpysquid10/tiny_voice/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_voice?style=flat&logo=git)](https://github.com/derpysquid10/tiny_voice/commits)
-[![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd)](https://github.com/derpysquid10/tiny_voice/blob/main/Tiny_Voice.pdf)
+![Python](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=Python&logoColor=white)
+[![Contributors](https://img.shields.io/github/contributors/derpysquid10/tiny_voice?style=flat&logo=github&logoColor=white)](https://github.com/derpysquid10/tiny_voice/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/derpysquid10/tiny_voice?style=flat&logo=target&logoColor=white)](https://github.com/derpysquid10/tiny_voice/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/derpysquid10/tiny_voice?style=flat&logo=git&logoColor=white)](https://github.com/derpysquid10/tiny_voice/commits)
+[![Tiny Voice Paper](https://img.shields.io/badge/Tiny%20Voice-Paper-red?style=flat&logo=carrd&logoColor=white)](https://github.com/derpysquid10/tiny_voice/blob/main/Tiny_Voice.pdf)
+
 
 
 
@@ -26,7 +27,7 @@ An open-source, user friendly library to fine-tune speech-to-text models on edge
 
 ## Installation
 We set up a virtual environment using conda, and our code is developed in Python 3.12.<br/>
-**NOTE:** Tiny Voice is has only been tested on Linux systems, if using Windows, please install [Windows System Linux ](https://learn.microsoft.com/en-us/windows/wsl/setup/environment#set-up-your-linux-username-and-password) (WSL):
+**NOTE:** Tiny Voice is has only been tested on Linux systems, if using Windows, please install [Windows System Linux](https://learn.microsoft.com/en-us/windows/wsl/setup/environment#set-up-your-linux-username-and-password) (WSL):
 
 ```bash
 # Cloning the repository
