@@ -7,7 +7,7 @@ app = typer.Typer()
 def run(
     dataset_choice: int = typer.Option(
         None, 
-        help="Choose dataset: 1=isixhosa, 2=isizulu, 3=swahili"
+        help="Choose dataset: 1=isizulu, 2=swahili"
     ),
     peft_choice: int = typer.Option(
         None, 
@@ -16,9 +16,8 @@ def run(
 ):
     # Mapping dictionaries
     dataset_mapping = {
-        1: "isixhosa",
-        2: "isizulu",
-        3: "swahili"
+        1: "isizulu",
+        2: "swahili"
     }
     peft_mapping = {
         1: "partial",
@@ -28,11 +27,11 @@ def run(
 
     # Prompt for numeric choice if not provided on the command line
     if dataset_choice is None:
-        dataset_choice = int(typer.prompt("Enter dataset:\n   1 = isixhosa\n   2 = isizulu\n   3 = swahili\n"))
+        dataset_choice = int(typer.prompt("Enter dataset:\n   1 = isizulu\n   2 = swahili\n"))
     
     # Validate dataset selection
     if dataset_choice not in dataset_mapping:
-        typer.echo(f"Invalid dataset choice '{dataset_choice}'. Choose 1, 2, or 3.")
+        typer.echo(f"Invalid dataset choice '{dataset_choice}'. Choose 1, or 2.")
         raise typer.Exit(code=1)
     
     # Prompt for numeric choice if not provided on the command line

@@ -6,6 +6,8 @@ from datasets import load_dataset, load_from_disk, DatasetDict, Audio
 from transformers import WhisperProcessor, WhisperFeatureExtractor, WhisperTokenizer
 import os
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")  # <--- Add this line
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from config import HF_CACHE_DIR, EDA_DIR, PROCESSED_DATA_DIR, MODEL_NAME
